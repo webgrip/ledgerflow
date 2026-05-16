@@ -29,7 +29,7 @@ export const options = {
   },
 };
 
-const BASE_URL = __ENV.APP_URL || 'http://localhost:8003';
+const BASE_URL = __ENV.APP_URL || 'http://localhost';
 
 export default function () {
   group('Public pages', () => {

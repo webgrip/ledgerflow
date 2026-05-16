@@ -1,47 +1,49 @@
 # E2E Tests — Playwright
 
-## Setup
+End-to-end tests using [Playwright](https://playwright.dev).
 
-```bash
-npm install --save-dev @playwright/test
-npx playwright install chromium
-```
+## Prerequisites
+
+1. **App running**: `vendor/bin/sail up -d`
+2. **Playwright + browser installed**: `npm install && npx playwright install chromium`
 
 ## Run
 
 ```bash
-# All E2E tests (app must be running)
-npx playwright test
-
-# With UI explorer
-npx playwright test --ui
-
-# Specific file
-npx playwright test tests/E2e/login.spec.ts
-
-# Against a specific base URL
-APP_URL=http://localhost:8003 npx playwright test
+npm run test:e2e                # headless, all specs
+npm run test:e2e:headed         # visible browser
+npm run test:e2e:ui             # interactive UI mode with time-travel
+npm run test:e2e:report         # open last HTML report
+npx playwright test 03-accounts # run a single spec file
 ```
 
-## Prerequisites
+## Structure
 
-1. Start the application: `vendor/bin/sail up -d`
-2. Seed demo data: visit `/dev` and click **Seed Demo Data**
-3. Run tests: `npx playwright test`
+| File | Flows covered |
+|------|---------------|
+| `global-setup.ts` | Seeds demo data (alice/bob/carol + orgs + accounts + transactions) once before all tests |
+| `helpers.ts` | Shared `loginAs`, `createAccount`, `recordTransaction` helpers |
+| `01-auth.spec.ts` | Login, logout, registration, auth guards, validation errors |
+| `02-organizations.spec.ts` | Create org, org switcher, switch between orgs, access control |
+| `03-accounts.spec.ts` | Accounts list, create all 5 types, detail page, balance display, access control |
+| `04-transactions.spec.ts` | Record credit/debit, balance calculation, validation, access control |
+| `05-ai-explain.spec.ts` | Explain button, loading state, response display, dismiss |
+| `06-dev-dashboard.spec.ts` | Public access, KPI cards, all 6 tabs, seed/nuke actions, TX search, auto-refresh |
+| `07-navigation.spec.ts` | Sidebar links, user menu, breadcrumbs, 404 handling |
 
-## Test files
+## Demo credentials (seeded by global-setup)
 
-| File | Coverage |
-|------|----------|
-| `login.spec.ts` | Login, logout, registration flows |
-| `account-management.spec.ts` | Account index, create, detail page |
-| `transaction.spec.ts` | Recording transactions from account detail |
-| `dev-dashboard.spec.ts` | Dev dashboard tabs, seed, nuke |
+| User | Email | Password | Role |
+|------|-------|----------|------|
+| Alice | alice@demo.test | password | Owner — Acme Corp |
+| Bob | bob@demo.test | password | Member — Acme Corp |
+| Carol | carol@demo.test | password | Owner — Globex LLC |
 
-## Demo credentials (after seeding)
+## Configuration
 
-| Email | Password | Role |
-|-------|----------|------|
-| alice@demo.test | password | Owner — Acme Corp |
-| bob@demo.test | password | Member — Acme Corp |
-| carol@demo.test | password | Owner — Globex LLC |
+See `playwright.config.ts` at the repo root.
+Set `APP_URL` env var to point to a different app instance:
+
+```bash
+APP_URL=http://localhost:8080 npm run test:e2e
+```
