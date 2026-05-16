@@ -1,0 +1,160 @@
+# LedgerFlow — Manual HTTP Tests
+# Use with REST Client extension in VS Code, JetBrains HTTP Client, or httpie
+#
+# Prerequisites:
+#   1. App running: vendor/bin/sail up -d
+#   2. Demo seed: vendor/bin/sail artisan e2e:seed
+#
+# Variables — update BASE_URL and COOKIE after logging in
+
+@base = http://localhost
+@contentType = application/json
+
+###
+# ── Health Check ──────────────────────────────────────────────────────────────
+GET {{base}}/health
+Accept: application/json
+
+###
+# ── Authentication ─────────────────────────────────────────────────────────────
+# Login (Fortify — returns session cookie)
+POST {{base}}/login
+Content-Type: application/x-www-form-urlencoded
+
+email=alice%40demo.test&password=password&remember=false
+
+###
+# ── Webhook Ingestion ──────────────────────────────────────────────────────────
+# New Stripe payment intent (no signing secret configured in demo mode)
+POST {{base}}/webhooks/stripe
+Content-Type: application/json
+
+{
+  "id": "evt_manual_001",
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_manual_001",
+      "amount": 9900,
+      "currency": "eur",
+      "status": "succeeded"
+    }
+  }
+}
+
+###
+# Duplicate webhook — should return 200, not 202
+POST {{base}}/webhooks/stripe
+Content-Type: application/json
+
+{
+  "id": "evt_manual_001",
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_manual_001",
+      "amount": 9900,
+      "currency": "eur"
+    }
+  }
+}
+
+###
+# Mollie payment webhook
+POST {{base}}/webhooks/mollie
+Content-Type: application/json
+
+{
+  "id": "tr_mollie_001",
+  "action": "payment.paid",
+  "data": {
+    "amount": { "value": "49.99", "currency": "EUR" }
+  }
+}
+
+###
+# ── MCP Server (requires auth cookie) ─────────────────────────────────────────
+# Set your session cookie after logging in above
+@cookie = laravel_session=YOUR_SESSION_COOKIE_HERE
+
+# List tools
+POST {{base}}/mcp/ledgerflow
+Content-Type: application/json
+Cookie: {{cookie}}
+
+{
+  "method": "tools/list"
+}
+
+###
+# Get account summary
+POST {{base}}/mcp/ledgerflow
+Content-Type: application/json
+Cookie: {{cookie}}
+
+{
+  "method": "tools/call",
+  "params": {
+    "name": "get-account-summary",
+    "arguments": {}
+  }
+}
+
+###
+# Search transactions
+POST {{base}}/mcp/ledgerflow
+Content-Type: application/json
+Cookie: {{cookie}}
+
+{
+  "method": "tools/call",
+  "params": {
+    "name": "search-transactions",
+    "arguments": {
+      "search": "invoice",
+      "type": "credit",
+      "limit": 10
+    }
+  }
+}
+
+###
+# List reconciliation issues (open only)
+POST {{base}}/mcp/ledgerflow
+Content-Type: application/json
+Cookie: {{cookie}}
+
+{
+  "method": "tools/call",
+  "params": {
+    "name": "list-reconciliation-issues",
+    "arguments": {
+      "status": "open"
+    }
+  }
+}
+
+###
+# List audit events
+POST {{base}}/mcp/ledgerflow
+Content-Type: application/json
+Cookie: {{cookie}}
+
+{
+  "method": "tools/call",
+  "params": {
+    "name": "list-audit-events",
+    "arguments": {
+      "limit": 20
+    }
+  }
+}
+
+###
+# MCP without auth — should return 401/redirect
+POST {{base}}/mcp/ledgerflow
+Content-Type: application/json
+
+{
+  "method": "tools/list"
+}

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\AuditEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Ai\Responses\TextResponse;
 
 class AuditLogger
 {
@@ -30,5 +31,34 @@ class AuditLogger
             'user_id' => $userId ?? Auth::id(),
             'metadata' => empty($metadata) ? null : $metadata,
         ]);
+    }
+
+    /**
+     * Record an AI agent call with usage metadata for cost tracking.
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    public static function logAiCall(
+        string $agentClass,
+        TextResponse $response,
+        ?Model $subject = null,
+        ?int $organizationId = null,
+        array $extra = [],
+    ): AuditEvent {
+        $usage = $response->usage ?? null;
+
+        $metadata = array_merge([
+            'agent' => class_basename($agentClass),
+            'model' => $response->model ?? 'unknown',
+            'input_tokens' => $usage?->promptTokens,
+            'output_tokens' => $usage?->completionTokens,
+        ], $extra);
+
+        return self::log(
+            event: 'ai.agent_called',
+            subject: $subject,
+            organizationId: $organizationId,
+            metadata: array_filter($metadata, fn ($v) => $v !== null),
+        );
     }
 }

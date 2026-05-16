@@ -72,10 +72,25 @@ new #[Title('Account')] class extends Component {
 
     <div class="flex items-center justify-between mb-4">
         <flux:heading size="lg">{{ __('Transactions') }}</flux:heading>
-        <a href="{{ route('transactions.create', $account) }}" wire:navigate
-           class="inline-flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100">
-            + {{ __('Record Transaction') }}
-        </a>
+        <div class="flex items-center gap-3">
+            <flux:modal.trigger name="csv-import">
+                <flux:button variant="ghost" size="sm" icon="arrow-up-tray">
+                    {{ __('Import CSV') }}
+                </flux:button>
+            </flux:modal.trigger>
+            <flux:button
+                :href="route('accounts.export', $account)"
+                variant="ghost"
+                size="sm"
+                icon="arrow-down-tray"
+            >
+                {{ __('Export CSV') }}
+            </flux:button>
+            <a href="{{ route('transactions.create', $account) }}" wire:navigate
+               class="inline-flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-100">
+                + {{ __('Record Transaction') }}
+            </a>
+        </div>
     </div>
 
     {{-- Filter bar --}}
@@ -150,4 +165,6 @@ new #[Title('Account')] class extends Component {
             </table>
         </div>
     @endif
+
+    @livewire('transactions.csv-import', ['account' => $account])
 </div>

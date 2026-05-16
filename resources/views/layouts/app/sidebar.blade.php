@@ -22,6 +22,12 @@
                     <flux:sidebar.item icon="arrow-path" :href="route('reconciliation.index')" :current="request()->routeIs('reconciliation.*')" wire:navigate>
                         {{ __('Reconciliation') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="clipboard-document-list" :href="route('audit.index')" :current="request()->routeIs('audit.*')" wire:navigate>
+                        {{ __('Audit Log') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="bolt" :href="route('webhooks.index')" :current="request()->routeIs('webhooks.*')" wire:navigate>
+                        {{ __('Webhooks') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
                 <flux:sidebar.group :heading="__('Developer')" class="grid">
                     <flux:sidebar.item icon="bug-ant" :href="route('dev.dashboard')" :current="request()->routeIs('dev.*')" wire:navigate>
@@ -35,6 +41,9 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="heart" href="/health">
                         {{ __('Health') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="magnifying-glass" href="/telescope">
+                        {{ __('Telescope') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>

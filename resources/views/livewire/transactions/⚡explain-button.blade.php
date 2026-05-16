@@ -28,11 +28,12 @@ new class extends Component {
 
             $this->explanation = $response->text;
 
-            AuditLogger::log(
-                event: 'ai.transaction_explained',
+            AuditLogger::logAiCall(
+                agentClass: TransactionExplainer::class,
+                response: $response,
                 subject: $this->transaction,
                 organizationId: $this->transaction->account->organization_id,
-                metadata: ['transaction_id' => $this->transaction->id],
+                extra: ['transaction_id' => $this->transaction->id],
             );
         } catch (\Throwable $e) {
             $this->error = __('AI explanation is temporarily unavailable. Please try again later.');
