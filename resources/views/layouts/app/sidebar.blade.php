@@ -20,6 +20,11 @@
                         {{ __('Accounts') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+                <flux:sidebar.group :heading="__('Developer')" class="grid">
+                    <flux:sidebar.item icon="bug-ant" :href="route('dev.dashboard')" :current="request()->routeIs('dev.*')" wire:navigate>
+                        {{ __('Dev Dashboard') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
