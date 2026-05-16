@@ -1,0 +1,64 @@
+name: boost-drift
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - '.ai/**'
+      - 'boost.json'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/boost-drift.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  drift:
+    name: Detect Boost guideline drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Add Flux credentials
+        if: ${{ secrets.FLUX_USERNAME != '' }}
+        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Snapshot AGENTS.md and .github/skills/
+        run: |
+          cp AGENTS.md /tmp/AGENTS.md.before
+          if [ -d .github/skills ]; then
+            tar -czf /tmp/skills.before.tgz .github/skills
+          fi
+
+      - name: Regenerate Boost artifacts
+        run: php artisan boost:install --no-interaction || true
+
+      - name: Compare AGENTS.md
+        run: |
+          if ! diff -u /tmp/AGENTS.md.before AGENTS.md; then
+            echo "::error file=AGENTS.md::Boost block in AGENTS.md is out of sync. Run 'php artisan boost:install' locally and commit the result."
+            exit 1
+          fi
+
+      - name: Compare .github/skills/
+        run: |
+          if [ -f /tmp/skills.before.tgz ]; then
+            tar -czf /tmp/skills.after.tgz .github/skills
+            if ! cmp -s /tmp/skills.before.tgz /tmp/skills.after.tgz; then
+              echo "::error::.github/skills/ is out of sync with .ai/skills/. Run 'php artisan boost:install' locally and commit the result."
+              exit 1
+            fi
+          fi

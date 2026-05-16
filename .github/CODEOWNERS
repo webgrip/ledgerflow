@@ -1,0 +1,42 @@
+# CODEOWNERS — see <https://docs.github.com/articles/about-codeowners>
+
+# Owners listed here are auto-requested for review when matching paths change
+
+# Replace @webgrip/owners with the actual GitHub team or user handles for your org
+
+# Default fallback owner for everything not matched below
+
+*                               @webgrip/application
+
+# Agent customization — high-impact, low-surface-area files
+
+/AGENTS.md                      @webgrip/application
+/.ai/                           @webgrip/application
+/.github/copilot-instructions.md @webgrip/application
+/.github/instructions/          @webgrip/application
+/.github/prompts/               @webgrip/application
+/.github/agents/                @webgrip/application
+/.github/skills/                @webgrip/application
+/boost.json                     @webgrip/application
+
+# CI, infra, security-sensitive
+
+/.github/workflows/             @webgrip/application
+/.devcontainer/                 @webgrip/application
+/renovate.json                  @webgrip/application
+/compose.yaml                   @webgrip/application
+
+# Domain code lives under app/Domain/{Module}; route module-specific reviews here as the codebase grows
+
+# /app/Domain/Ledger/             @webgrip/domain-ledger
+
+# /app/Domain/Payments/           @webgrip/domain-payments
+
+# Database
+
+/database/migrations/           @webgrip/application
+
+# Tests — opinions on what behavior to test matter; keep owners aware
+
+/tests/                         @webgrip/application
+/tests/Eval/                    @webgrip/application

@@ -1,0 +1,175 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard",
+    ":prHourlyLimit2",
+    ":prConcurrentLimit10",
+    "group:monorepos",
+    "group:recommended",
+    "helpers:pinGitHubActionDigests",
+    "schedule:weekends",
+    "workarounds:all"
+  ],
+  "timezone": "Europe/Amsterdam",
+  "labels": [
+    "dependencies",
+    "automation"
+  ],
+  "rebaseWhen": "behind-base-branch",
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 5am on monday"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "dependencies",
+      "security"
+    ]
+  },
+  "osvVulnerabilityAlerts": true,
+  "configMigration": true,
+  "platformAutomerge": true,
+  "automergeStrategy": "squash",
+  "ignorePaths": [
+    "vendor/**",
+    "node_modules/**",
+    "**/.devcontainer/**"
+  ],
+  "packageRules": [
+    {
+      "description": "Group all Laravel first-party packages",
+      "matchManagers": [
+        "composer"
+      ],
+      "matchPackagePatterns": [
+        "^laravel/",
+        "^livewire/"
+      ],
+      "groupName": "laravel ecosystem"
+    },
+    {
+      "description": "Group all Pest / PHPUnit / dev testing tools",
+      "matchManagers": [
+        "composer"
+      ],
+      "matchPackagePatterns": [
+        "^pestphp/",
+        "^phpunit/",
+        "^mockery/",
+        "^fakerphp/",
+        "^nunomaduro/collision$"
+      ],
+      "groupName": "php testing"
+    },
+    {
+      "description": "Group all Symfony components",
+      "matchManagers": [
+        "composer"
+      ],
+      "matchPackagePatterns": [
+        "^symfony/"
+      ],
+      "groupName": "symfony"
+    },
+    {
+      "description": "Group npm dev tooling (vite, tailwind, prettier, eslint)",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackagePatterns": [
+        "^vite",
+        "^@vitejs/",
+        "^tailwindcss",
+        "^@tailwindcss/",
+        "^postcss",
+        "^autoprefixer",
+        "^prettier",
+        "^eslint"
+      ],
+      "groupName": "frontend tooling"
+    },
+    {
+      "description": "Automerge non-major updates after CI passes",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "matchCurrentVersion": "!/^0/"
+    },
+    {
+      "description": "0.x packages: hold automerge on minors (treat as breaking)",
+      "matchCurrentVersion": "/^0/",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Never automerge major updates",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "major-update",
+        "needs-review"
+      ]
+    },
+    {
+      "description": "GitHub Actions: pin to digests, group together",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github actions",
+      "pinDigests": true
+    },
+    {
+      "description": "Dockerfiles in dev container etc.",
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "groupName": "docker"
+    },
+    {
+      "description": "Hold core PHP/Laravel framework majors for explicit review",
+      "matchPackageNames": [
+        "php",
+        "laravel/framework"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "labels": [
+        "dependencies",
+        "framework-major",
+        "needs-adr"
+      ]
+    }
+  ],
+  "composer": {
+    "enabled": true
+  },
+  "npm": {
+    "enabled": true
+  },
+  "github-actions": {
+    "enabled": true
+  },
+  "dockerfile": {
+    "enabled": true
+  }
+}

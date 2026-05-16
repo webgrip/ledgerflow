@@ -1,0 +1,92 @@
+// For format details, see https://aka.ms/devcontainer.json
+{
+  "name": "LedgerFlow (Sail)",
+  "dockerComposeFile": [
+    "../compose.yaml"
+  ],
+  "service": "laravel.test",
+  "workspaceFolder": "/var/www/html",
+  "shutdownAction": "stopCompose",
+  // Sail's Dockerfile requires WWWUSER / WWWGROUP build args.
+  // The Sail CLI normally exports them; when VS Code calls `docker compose build`
+  // directly we have to ensure they're present in the environment.
+  "initializeCommand": "grep -q '^WWWUSER=' .env 2>/dev/null || echo \"WWWUSER=$(id -u)\" >> .env; grep -q '^WWWGROUP=' .env 2>/dev/null || echo \"WWWGROUP=$(id -g)\" >> .env",
+  // Do NOT set containerUser or updateRemoteUserUID here:
+  //   - Sail's entrypoint (`start-container`) must run as root so it can
+  //     `usermod` the `sail` user to match WWWUSER, then drop privileges via gosu.
+  //     Forcing `containerUser: sail` produces a zombie container (SIGKILL on first shell).
+  //   - `updateRemoteUserUID` runs a separate UID-remap Dockerfile that conflicts
+  //     with Sail's own UID handling. Sail already maps UID via WWWUSER above.
+  // `remoteUser` only controls who VS Code attaches as (terminals, postCreate),
+  // not who runs the entrypoint.
+  "remoteUser": "sail",
+  "forwardPorts": [
+    80,
+    5173,
+    5432,
+    6379,
+    1025,
+    8025
+  ],
+  "portsAttributes": {
+    "80": {
+      "label": "Laravel (APP_PORT)"
+    },
+    "5173": {
+      "label": "Vite dev server"
+    },
+    "5432": {
+      "label": "PostgreSQL"
+    },
+    "6379": {
+      "label": "Redis"
+    },
+    "1025": {
+      "label": "Mailpit SMTP"
+    },
+    "8025": {
+      "label": "Mailpit UI"
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "php.validate.executablePath": "/usr/local/bin/php"
+      },
+      "extensions": [
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-pull-request-github",
+        "github.vscode-github-actions",
+        "bmewburn.vscode-intelephense-client",
+        "open-southeners.laravel-pint",
+        "shufo.vscode-blade-formatter",
+        "onecentlin.laravel-blade",
+        "amiralizadeh9480.laravel-extra-intellisense",
+        "calebporzio.better-phpunit",
+        "recca0120.vscode-phpunit",
+        "ms-azuretools.vscode-docker",
+        "tailcss.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "davidanson.vscode-markdownlint",
+        "editorconfig.editorconfig",
+        "ryanluker.vscode-coverage-gutters",
+        "yzhang.markdown-all-in-one",
+        "mikestead.dotenv"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "echo 'LedgerFlow dev container ready. Run: vendor/bin/sail artisan migrate'",
+  "remoteEnv": {
+    "COMPOSE_PROJECT_NAME": "ledgerflow"
+  }
+}
