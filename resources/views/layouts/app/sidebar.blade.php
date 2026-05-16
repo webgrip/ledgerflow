@@ -19,6 +19,9 @@
                     <flux:sidebar.item icon="banknotes" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" wire:navigate>
                         {{ __('Accounts') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="arrow-path" :href="route('reconciliation.index')" :current="request()->routeIs('reconciliation.*')" wire:navigate>
+                        {{ __('Reconciliation') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
                 <flux:sidebar.group :heading="__('Developer')" class="grid">
                     <flux:sidebar.item icon="bug-ant" :href="route('dev.dashboard')" :current="request()->routeIs('dev.*')" wire:navigate>

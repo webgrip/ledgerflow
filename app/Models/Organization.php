@@ -24,6 +24,12 @@ class Organization extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<Account, $this> */
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
+
     /** @return HasMany<OrganizationMembership, $this> */
     public function memberships(): HasMany
     {

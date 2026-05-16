@@ -68,6 +68,8 @@ new #[Title('Account')] class extends Component {
         </div>
     </div>
 
+    @livewire('accounts.activity-summary', ['account' => $account])
+
     <div class="flex items-center justify-between mb-4">
         <flux:heading size="lg">{{ __('Transactions') }}</flux:heading>
         <a href="{{ route('transactions.create', $account) }}" wire:navigate
@@ -119,7 +121,7 @@ new #[Title('Account')] class extends Component {
                         <th class="px-4 py-3 font-medium">{{ __('Description') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Type') }}</th>
                         <th class="px-4 py-3 font-medium text-right">{{ __('Amount') }}</th>
-                        <th class="px-4 py-3 font-medium"></th>
+                        <th class="px-4 py-3 font-medium" colspan="2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
@@ -137,7 +139,10 @@ new #[Title('Account')] class extends Component {
                                 {{ number_format($transaction->amount_minor_units / 100, 2) }}
                             </td>
                             <td class="px-4 py-3">
-                                @livewire('transactions.explain-button', ['transaction' => $transaction], key($transaction->id))
+                                @livewire('transactions.explain-button', ['transaction' => $transaction], key('explain-'.$transaction->id))
+                            </td>
+                            <td class="px-4 py-3">
+                                @livewire('transactions.categorize-button', ['transaction' => $transaction], key('cat-'.$transaction->id))
                             </td>
                         </tr>
                     @endforeach
