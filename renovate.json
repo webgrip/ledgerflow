@@ -48,52 +48,52 @@
       "matchManagers": [
         "composer"
       ],
-      "matchPackagePatterns": [
-        "^laravel/",
-        "^livewire/"
-      ],
-      "groupName": "laravel ecosystem"
+      "groupName": "laravel ecosystem",
+      "matchPackageNames": [
+        "/^laravel//",
+        "/^livewire//"
+      ]
     },
     {
       "description": "Group all Pest / PHPUnit / dev testing tools",
       "matchManagers": [
         "composer"
       ],
-      "matchPackagePatterns": [
-        "^pestphp/",
-        "^phpunit/",
-        "^mockery/",
-        "^fakerphp/",
-        "^nunomaduro/collision$"
-      ],
-      "groupName": "php testing"
+      "groupName": "php testing",
+      "matchPackageNames": [
+        "/^pestphp//",
+        "/^phpunit//",
+        "/^mockery//",
+        "/^fakerphp//",
+        "/^nunomaduro/collision$/"
+      ]
     },
     {
       "description": "Group all Symfony components",
       "matchManagers": [
         "composer"
       ],
-      "matchPackagePatterns": [
-        "^symfony/"
-      ],
-      "groupName": "symfony"
+      "groupName": "symfony",
+      "matchPackageNames": [
+        "/^symfony//"
+      ]
     },
     {
       "description": "Group npm dev tooling (vite, tailwind, prettier, eslint)",
       "matchManagers": [
         "npm"
       ],
-      "matchPackagePatterns": [
-        "^vite",
-        "^@vitejs/",
-        "^tailwindcss",
-        "^@tailwindcss/",
-        "^postcss",
-        "^autoprefixer",
-        "^prettier",
-        "^eslint"
-      ],
-      "groupName": "frontend tooling"
+      "groupName": "frontend tooling",
+      "matchPackageNames": [
+        "/^vite/",
+        "/^@vitejs//",
+        "/^tailwindcss/",
+        "/^@tailwindcss//",
+        "/^postcss/",
+        "/^autoprefixer/",
+        "/^prettier/",
+        "/^eslint/"
+      ]
     },
     {
       "description": "Automerge non-major updates after CI passes",
