@@ -27,6 +27,15 @@
                     <flux:sidebar.item icon="bug-ant" :href="route('dev.dashboard')" :current="request()->routeIs('dev.*')" wire:navigate>
                         {{ __('Dev Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="chart-bar" href="/pulse">
+                        {{ __('Pulse') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="queue-list" href="/horizon">
+                        {{ __('Horizon') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="heart" href="/health">
+                        {{ __('Health') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

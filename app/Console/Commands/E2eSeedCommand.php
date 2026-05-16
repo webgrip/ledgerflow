@@ -8,9 +8,14 @@ use App\Actions\CreateOrganization;
 use App\Actions\RecordTransaction;
 use App\Enums\AccountType;
 use App\Enums\OrganizationRole;
+use App\Enums\ReconciliationStatus;
 use App\Enums\TransactionType;
+use App\Enums\WebhookStatus;
 use App\Models\Account;
+use App\Models\ReconciliationIssue;
+use App\Models\ReconciliationRun;
 use App\Models\User;
+use App\Models\WebhookEvent;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -18,13 +23,13 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 #[Signature('e2e:seed {--fresh : Truncate all tables first}')]
-#[Description('Seed deterministic E2E demo data (alice, bob, carol + orgs + accounts + transactions).')]
+#[Description('Seed deterministic E2E demo data (alice, bob, carol + orgs + accounts + transactions + webhooks + reconciliation).')]
 class E2eSeedCommand extends Command
 {
     public function handle(): int
     {
         if ($this->option('fresh')) {
-            DB::statement('TRUNCATE TABLE transactions, accounts, organization_memberships, organizations, users RESTART IDENTITY CASCADE;');
+            DB::statement('TRUNCATE TABLE reconciliation_issues, reconciliation_runs, provider_events, audit_events, transactions, accounts, organization_memberships, organizations, users RESTART IDENTITY CASCADE;');
             $this->line('🗑  Database truncated.');
         }
 
@@ -43,7 +48,6 @@ class E2eSeedCommand extends Command
                 ['name' => 'Carol CFO', 'password' => bcrypt('password'), 'email_verified_at' => now()]
             );
 
-            // Ensure email_verified_at is set (in case they already existed)
             foreach ([$alice, $bob, $carol] as $user) {
                 if ($user->email_verified_at === null) {
                     $user->update(['email_verified_at' => now()]);
@@ -56,9 +60,11 @@ class E2eSeedCommand extends Command
                 ['user_id' => $bob->id],
                 ['role' => OrganizationRole::Member]
             );
+            $alice->update(['current_organization_id' => $org1->id]);
             $bob->update(['current_organization_id' => $org1->id]);
 
             $org2 = app(CreateOrganization::class)->handle($carol, 'Globex LLC');
+            $carol->update(['current_organization_id' => $org2->id]);
 
             // Accounts for Org 1
             $checking = Account::create(['organization_id' => $org1->id, 'name' => 'Main Checking', 'type' => AccountType::Asset, 'currency' => 'USD']);
@@ -71,7 +77,7 @@ class E2eSeedCommand extends Command
 
             // Transactions
             $recordTx = app(RecordTransaction::class);
-            foreach ([
+            $txData = [
                 [$checking, TransactionType::Credit, 500000, 'Initial deposit',       '-60 days'],
                 [$revenue,  TransactionType::Credit, 120000, 'Q1 product sales',      '-55 days'],
                 [$checking, TransactionType::Credit, 250000, 'Client invoice #1001',  '-45 days'],
@@ -83,7 +89,9 @@ class E2eSeedCommand extends Command
                 [$opex,     TransactionType::Debit,   30000, 'Cloud infrastructure',  '-20 days'],
                 [$opex,     TransactionType::Debit,   15000, 'SaaS subscriptions',     '-5 days'],
                 [$savings,  TransactionType::Credit, 300000, 'Investor top-up',        '-3 days'],
-            ] as [$account, $type, $amount, $desc, $daysAgo]) {
+            ];
+
+            foreach ($txData as [$account, $type, $amount, $desc, $daysAgo]) {
                 $recordTx->handle(
                     account: $account,
                     type: $type,
@@ -92,9 +100,70 @@ class E2eSeedCommand extends Command
                     transactedAt: CarbonImmutable::now()->modify($daysAgo),
                 );
             }
+
+            // Webhook events for Org 1 (Stripe simulation)
+            $webhookEvents = [
+                ['stripe', 'stripe:evt_demo_001', 'payment_intent.succeeded', ['id' => 'evt_demo_001', 'type' => 'payment_intent.succeeded', 'amount' => 250000], WebhookStatus::Processed, '-45 days'],
+                ['stripe', 'stripe:evt_demo_002', 'payment_intent.succeeded', ['id' => 'evt_demo_002', 'type' => 'payment_intent.succeeded', 'amount' => 75000], WebhookStatus::Processed, '-25 days'],
+                ['stripe', 'stripe:evt_demo_003', 'payment_intent.succeeded', ['id' => 'evt_demo_003', 'type' => 'payment_intent.succeeded', 'amount' => 99900], WebhookStatus::Processed, '-7 days'],
+                ['stripe', 'stripe:evt_demo_004', 'charge.refunded', ['id' => 'evt_demo_004', 'type' => 'charge.refunded', 'amount' => 15000], WebhookStatus::Failed, '-3 days'],
+                ['stripe', 'stripe:evt_demo_005', 'payment_intent.succeeded', ['id' => 'evt_demo_005', 'type' => 'payment_intent.succeeded', 'amount' => 200000], WebhookStatus::Pending, '-1 days'],
+            ];
+
+            foreach ($webhookEvents as [$provider, $key, $eventType, $payload, $status, $daysAgo]) {
+                WebhookEvent::create([
+                    'organization_id' => $org1->id,
+                    'provider' => $provider,
+                    'idempotency_key' => $key,
+                    'event_type' => $eventType,
+                    'payload' => $payload,
+                    'status' => $status,
+                    'created_at' => CarbonImmutable::now()->modify($daysAgo),
+                    'updated_at' => CarbonImmutable::now()->modify($daysAgo),
+                ]);
+            }
+
+            // Reconciliation run for Org 1
+            $run = ReconciliationRun::create([
+                'organization_id' => $org1->id,
+                'initiated_by' => $alice->id,
+                'status' => ReconciliationStatus::Completed,
+                'period_start' => CarbonImmutable::now()->subDays(60)->startOfMonth(),
+                'period_end' => CarbonImmutable::now()->subDays(30)->endOfMonth(),
+                'matched_count' => 2,
+                'unmatched_count' => 2,
+                'created_at' => CarbonImmutable::now()->subDays(28),
+                'updated_at' => CarbonImmutable::now()->subDays(28),
+            ]);
+
+            ReconciliationIssue::insert([
+                [
+                    'reconciliation_run_id' => $run->id,
+                    'organization_id' => $org1->id,
+                    'issue_type' => 'unmatched_event',
+                    'status' => 'open',
+                    'details' => json_encode(['webhook_event_id' => 1, 'provider' => 'stripe', 'event_type' => 'payment_intent.succeeded', 'amount' => 99900]),
+                    'created_at' => CarbonImmutable::now()->subDays(28),
+                    'updated_at' => CarbonImmutable::now()->subDays(28),
+                ],
+                [
+                    'reconciliation_run_id' => $run->id,
+                    'organization_id' => $org1->id,
+                    'issue_type' => 'unmatched_event',
+                    'status' => 'resolved',
+                    'details' => json_encode(['webhook_event_id' => 2, 'provider' => 'stripe', 'event_type' => 'charge.refunded', 'amount' => 15000]),
+                    'created_at' => CarbonImmutable::now()->subDays(28),
+                    'updated_at' => CarbonImmutable::now()->subDays(20),
+                ],
+            ]);
         });
 
-        $this->info('✅  Demo data seeded: alice, bob, carol + 2 orgs + 5 accounts + 11 transactions.');
+        $this->info('✅  Demo data seeded:');
+        $this->line('   • Users: alice@demo.test, bob@demo.test, carol@demo.test (password: password)');
+        $this->line('   • Orgs: Acme Corp (alice + bob), Globex LLC (carol)');
+        $this->line('   • 5 accounts + 11 transactions');
+        $this->line('   • 5 Stripe webhook events (3 processed, 1 failed, 1 pending)');
+        $this->line('   • 1 reconciliation run with 2 issues (1 open, 1 resolved)');
 
         return self::SUCCESS;
     }
