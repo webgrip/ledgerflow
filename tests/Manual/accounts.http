@@ -1,0 +1,59 @@
+### Accounts & Transactions — Manual HTTP Tests
+### Run with VS Code REST Client or JetBrains HTTP Client
+### Authenticate first using auth.http to get a valid session
+
+@baseUrl = http://localhost:8003
+
+### ── Dev dashboard (public, no auth required) ────────────────────────────────
+GET {{baseUrl}}/dev
+Accept: text/html
+
+### ── Health check ────────────────────────────────────────────────────────────
+GET {{baseUrl}}/up
+Accept: text/html
+
+### ── Accounts index (requires auth) ─────────────────────────────────────────
+GET {{baseUrl}}/accounts
+Cookie: laravel_session=AUTHED_SESSION
+Accept: text/html
+
+### ── Accounts create page (requires auth) ────────────────────────────────────
+GET {{baseUrl}}/accounts/create
+Cookie: laravel_session=AUTHED_SESSION
+Accept: text/html
+
+### ── Account detail page ─────────────────────────────────────────────────────
+# Replace {id} with a real account ID from the dev dashboard
+GET {{baseUrl}}/accounts/1
+Cookie: laravel_session=AUTHED_SESSION
+Accept: text/html
+
+### ── Account detail page — non-member should return 403 ────────────────────
+# Login as bob@demo.test who doesn't have access to a Globex account
+GET {{baseUrl}}/accounts/999
+Cookie: laravel_session=BOBS_SESSION
+Accept: text/html
+
+### ── Transaction create page ────────────────────────────────────────────────
+GET {{baseUrl}}/accounts/1/transactions/create
+Cookie: laravel_session=AUTHED_SESSION
+Accept: text/html
+
+### ── Non-existent account — should return 404 ───────────────────────────────
+GET {{baseUrl}}/accounts/99999999
+Cookie: laravel_session=AUTHED_SESSION
+Accept: text/html
+
+### ── Non-existent route — should return 404, NOT 500 ───────────────────────
+GET {{baseUrl}}/this-does-not-exist
+Accept: text/html
+
+### ── Dev seed action (Livewire) ─────────────────────────────────────────────
+# This tests the Livewire update endpoint directly
+POST {{baseUrl}}/livewire-b5ad48da/update
+Content-Type: application/json
+Accept: application/json
+
+{
+  "components": []
+}

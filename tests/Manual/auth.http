@@ -1,0 +1,45 @@
+### Authentication — Manual HTTP Tests
+### Run with VS Code REST Client or JetBrains HTTP Client
+
+@baseUrl = http://localhost:8003
+
+### ── Register a new user ──────────────────────────────────────────────────────
+POST {{baseUrl}}/register
+Content-Type: application/x-www-form-urlencoded
+
+name=Test+User&email=manual-test@example.com&password=password123&password_confirmation=password123
+
+### ── Login with valid credentials ────────────────────────────────────────────
+POST {{baseUrl}}/login
+Content-Type: application/x-www-form-urlencoded
+
+email=alice@demo.test&password=password
+
+### ── Login with INVALID credentials (expect 302 redirect + session error) ───
+POST {{baseUrl}}/login
+Content-Type: application/x-www-form-urlencoded
+
+email=alice@demo.test&password=wrongpassword
+
+### ── Logout ───────────────────────────────────────────────────────────────────
+# Replace SESSION_COOKIE with the session cookie from a successful login
+POST {{baseUrl}}/logout
+Cookie: laravel_session=SESSION_COOKIE
+Content-Type: application/x-www-form-urlencoded
+
+_token=CSRF_TOKEN
+
+### ── Access protected route without auth (expect 302 → /login) ──────────────
+GET {{baseUrl}}/dashboard
+Accept: text/html
+
+### ── Access protected route with auth (expect 200) ─────────────────────────
+GET {{baseUrl}}/accounts
+Cookie: laravel_session=AUTHED_SESSION
+Accept: text/html
+
+### ── Attempt to register with duplicate email (expect validation error) ─────
+POST {{baseUrl}}/register
+Content-Type: application/x-www-form-urlencoded
+
+name=Another+User&email=alice@demo.test&password=password123&password_confirmation=password123

@@ -109,8 +109,8 @@ new #[Title('Dev Dashboard')] #[Layout('layouts.dev')] class extends Component {
     {
         return Transaction::select(
             DB::raw('DATE(transacted_at) as day'),
-            DB::raw('SUM(CASE WHEN type = "credit" THEN amount_minor_units ELSE 0 END) as credits'),
-            DB::raw('SUM(CASE WHEN type = "debit" THEN amount_minor_units ELSE 0 END) as debits')
+            DB::raw("SUM(CASE WHEN type = 'credit' THEN amount_minor_units ELSE 0 END) as credits"),
+            DB::raw("SUM(CASE WHEN type = 'debit' THEN amount_minor_units ELSE 0 END) as debits")
         )
             ->where('transacted_at', '>=', now()->subDays(30))
             ->groupBy('day')
@@ -225,13 +225,7 @@ new #[Title('Dev Dashboard')] #[Layout('layouts.dev')] class extends Component {
 
     public function nukeDatabase(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('transactions')->truncate();
-        DB::table('accounts')->truncate();
-        DB::table('organization_memberships')->truncate();
-        DB::table('organizations')->truncate();
-        DB::table('users')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        DB::statement('TRUNCATE TABLE transactions, accounts, organization_memberships, organizations, users RESTART IDENTITY CASCADE;');
 
         unset($this->stats, $this->users, $this->organizations, $this->accounts, $this->transactions, $this->accountTypeBreakdown, $this->txVolumeByDay);
         $this->flash('Database cleared.', 'warning');
