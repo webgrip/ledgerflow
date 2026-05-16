@@ -1,0 +1,24 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    level: 5
+
+    treatPhpDocTypesAsCertain: false
+
+    ignoreErrors:
+        # Known Larastan limitation: TPivotModel is not covariant on BelongsToMany
+        - identifier: return.type
+          path: app/Models/Organization.php
+        - identifier: return.type
+          path: app/Models/User.php
+        # Password::default() returns Password which satisfies ValidationRule at runtime
+        - identifier: return.type
+          path: app/Concerns/PasswordValidationRules.php
+
+    excludePaths:
+        - app/Console/Commands/E2eResetOrgCommand.php
+        - app/Console/Commands/E2eSeedCommand.php

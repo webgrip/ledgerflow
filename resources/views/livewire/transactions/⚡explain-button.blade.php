@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\TransactionExplainer;
 use App\Models\Transaction;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -26,6 +27,13 @@ new class extends Component {
                 ->prompt('Please explain this transaction.');
 
             $this->explanation = $response->text;
+
+            AuditLogger::log(
+                event: 'ai.transaction_explained',
+                subject: $this->transaction,
+                organizationId: $this->transaction->account->organization_id,
+                metadata: ['transaction_id' => $this->transaction->id],
+            );
         } catch (\Throwable $e) {
             $this->error = __('AI explanation is temporarily unavailable. Please try again later.');
         } finally {

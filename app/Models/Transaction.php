@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\TransactionType;
+use Carbon\CarbonImmutable;
 use Database\Factories\TransactionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property TransactionType $type
+ * @property int $amount_minor_units
+ * @property int $account_id
+ * @property CarbonImmutable $transacted_at
+ */
 #[Fillable(['account_id', 'type', 'amount_minor_units', 'description', 'transacted_at'])]
 class Transaction extends Model
 {

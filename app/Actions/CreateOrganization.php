@@ -7,13 +7,14 @@ namespace App\Actions;
 use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 class CreateOrganization
 {
     public function handle(User $user, string $name): Organization
     {
-        return DB::transaction(function () use ($user, $name): Organization {
+        $organization = DB::transaction(function () use ($user, $name): Organization {
             $organization = Organization::create([
                 'name' => $name,
                 'created_by' => $user->id,
@@ -28,5 +29,15 @@ class CreateOrganization
 
             return $organization;
         });
+
+        AuditLogger::log(
+            event: 'organization.created',
+            subject: $organization,
+            organizationId: $organization->id,
+            userId: $user->id,
+            metadata: ['name' => $name],
+        );
+
+        return $organization;
     }
 }

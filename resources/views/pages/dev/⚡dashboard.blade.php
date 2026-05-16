@@ -8,6 +8,7 @@ use App\Enums\AccountType;
 use App\Enums\OrganizationRole;
 use App\Enums\TransactionType;
 use App\Models\Account;
+use App\Models\AuditEvent;
 use App\Models\Organization;
 use App\Models\Transaction;
 use App\Models\User;
@@ -118,6 +119,15 @@ new #[Title('Dev Dashboard')] #[Layout('layouts.dev')] class extends Component {
             ->get()
             ->keyBy('day')
             ->all();
+    }
+
+    #[Computed]
+    public function auditEvents(): \Illuminate\Database\Eloquent\Collection
+    {
+        return AuditEvent::with(['actor', 'organization'])
+            ->latest()
+            ->limit(200)
+            ->get();
     }
 
     #[Computed]
@@ -270,6 +280,7 @@ new #[Title('Dev Dashboard')] #[Layout('layouts.dev')] class extends Component {
                     ['accounts',      'Accounts',      '💳'],
                     ['transactions',  'Transactions',  '↕'],
                     ['users',         'Users',         '👤'],
+                    ['audit',         'Audit',         '🔍'],
                     ['system',        'System',        '⚙'],
                 ] as [$key, $label, $icon])
                     <button
@@ -813,6 +824,68 @@ new #[Title('Dev Dashboard')] #[Layout('layouts.dev')] class extends Component {
             @endif
 
         {{-- ════════════════════════════════════════════════════════════════════ --}}
+        {{-- AUDIT TAB --}}
+        @elseif ($activeTab === 'audit')
+
+            <div class="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+                    <div class="text-xs font-semibold uppercase tracking-widest text-zinc-500">Audit Events (last 200)</div>
+                    <span class="text-xs text-zinc-600 font-mono">{{ $this->auditEvents->count() }} records</span>
+                </div>
+                @if ($this->auditEvents->isEmpty())
+                    <div class="p-12 text-center text-zinc-600 text-sm">No audit events recorded yet.</div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs font-mono">
+                            <thead class="border-b border-zinc-800 bg-zinc-950">
+                                <tr class="text-zinc-600 uppercase tracking-wide">
+                                    <th class="px-4 py-2 text-left">ID</th>
+                                    <th class="px-4 py-2 text-left">Time</th>
+                                    <th class="px-4 py-2 text-left">Event</th>
+                                    <th class="px-4 py-2 text-left">Actor</th>
+                                    <th class="px-4 py-2 text-left">Org</th>
+                                    <th class="px-4 py-2 text-left">Subject</th>
+                                    <th class="px-4 py-2 text-left">Metadata</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-800/50">
+                                @foreach ($this->auditEvents as $event)
+                                    <tr class="hover:bg-zinc-800/30 transition-colors">
+                                        <td class="px-4 py-2 text-zinc-600">{{ $event->id }}</td>
+                                        <td class="px-4 py-2 text-zinc-500 whitespace-nowrap">{{ $event->created_at->format('m-d H:i:s') }}</td>
+                                        <td class="px-4 py-2">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold
+                                                {{ match(true) {
+                                                    str_starts_with($event->event, 'account.') => 'bg-blue-500/20 text-blue-300',
+                                                    str_starts_with($event->event, 'transaction.') => 'bg-green-500/20 text-green-300',
+                                                    str_starts_with($event->event, 'organization.') => 'bg-violet-500/20 text-violet-300',
+                                                    str_starts_with($event->event, 'ai.') => 'bg-amber-500/20 text-amber-300',
+                                                    default => 'bg-zinc-700 text-zinc-400',
+                                                } }}">
+                                                {{ $event->event }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-2 text-zinc-400">{{ $event->actor?->name ?? '—' }}</td>
+                                        <td class="px-4 py-2 text-zinc-500">{{ $event->organization?->name ?? '—' }}</td>
+                                        <td class="px-4 py-2 text-zinc-600">
+                                            @if ($event->subject_type)
+                                                {{ class_basename($event->subject_type) }}#{{ $event->subject_id }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2 text-zinc-600 max-w-xs truncate">
+                                            {{ $event->metadata ? json_encode($event->metadata) : '—' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+
+        {{-- ════════════════════════════════════════════════════════════════════ --}}
         {{-- SYSTEM TAB --}}
         @elseif ($activeTab === 'system')
 
@@ -841,6 +914,7 @@ new #[Title('Dev Dashboard')] #[Layout('layouts.dev')] class extends Component {
                             ['organization_memberships', '🤝'],
                             ['accounts', '💳'],
                             ['transactions', '↕'],
+                            ['audit_events', '🔍'],
                         ] as [$table, $icon])
                             <div class="flex justify-between items-center py-1.5 border-b border-zinc-800 last:border-0">
                                 <span class="text-xs text-zinc-500 font-mono">{{ $icon }} {{ $table }}</span>

@@ -13,6 +13,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property AccountType $type
+ * @property string $currency
+ * @property string $name
+ * @property int $organization_id
+ */
 #[Fillable(['organization_id', 'name', 'type', 'currency', 'description'])]
 class Account extends Model
 {

@@ -21,21 +21,22 @@ class AccountPolicy
         return $account->organization->hasUser($user);
     }
 
-    /** Org members may create accounts in their current org. */
+    /** Only org owners may create accounts. */
     public function create(User $user): bool
     {
-        return $user->current_organization_id !== null;
+        return $user->current_organization_id !== null
+            && $user->currentOrganization?->ownerOf($user) === true;
     }
 
-    /** Only org members may update accounts. */
+    /** Only org owners may update accounts. */
     public function update(User $user, Account $account): bool
     {
-        return $account->organization->hasUser($user);
+        return $account->organization->ownerOf($user);
     }
 
-    /** Only org members may delete accounts. */
+    /** Only org owners may delete accounts. */
     public function delete(User $user, Account $account): bool
     {
-        return $account->organization->hasUser($user);
+        return $account->organization->ownerOf($user);
     }
 }

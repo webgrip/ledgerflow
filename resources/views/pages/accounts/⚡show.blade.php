@@ -1,12 +1,26 @@
 <?php
 
+use App\Enums\TransactionType;
 use App\Models\Account;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Title('Account')] class extends Component {
     public Account $account;
+
+    #[Url(as: 'q')]
+    public string $search = '';
+
+    #[Url]
+    public string $type = '';
+
+    #[Url(as: 'from')]
+    public string $dateFrom = '';
+
+    #[Url(as: 'to')]
+    public string $dateTo = '';
 
     public function mount(Account $account): void
     {
@@ -16,7 +30,27 @@ new #[Title('Account')] class extends Component {
     #[Computed]
     public function transactions(): \Illuminate\Database\Eloquent\Collection
     {
-        return $this->account->transactions()->orderByDesc('transacted_at')->get();
+        return $this->account->transactions()
+            ->when($this->search !== '', fn ($q) => $q->where('description', 'ilike', '%'.$this->search.'%'))
+            ->when($this->type !== '', fn ($q) => $q->where('type', $this->type))
+            ->when($this->dateFrom !== '', fn ($q) => $q->whereDate('transacted_at', '>=', $this->dateFrom))
+            ->when($this->dateTo !== '', fn ($q) => $q->whereDate('transacted_at', '<=', $this->dateTo))
+            ->orderByDesc('transacted_at')
+            ->get();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->search = '';
+        $this->type = '';
+        $this->dateFrom = '';
+        $this->dateTo = '';
+    }
+
+    #[Computed]
+    public function hasActiveFilters(): bool
+    {
+        return $this->search !== '' || $this->type !== '' || $this->dateFrom !== '' || $this->dateTo !== '';
     }
 }; ?>
 
@@ -42,10 +76,39 @@ new #[Title('Account')] class extends Component {
         </a>
     </div>
 
+    {{-- Filter bar --}}
+    <div class="flex flex-wrap gap-3 mb-4">
+        <div class="flex-1 min-w-48">
+            <flux:input
+                wire:model.live.debounce.300ms="search"
+                placeholder="{{ __('Search descriptions…') }}"
+                icon="magnifying-glass"
+                size="sm"
+            />
+        </div>
+        <flux:select wire:model.live="type" size="sm" class="w-36">
+            <flux:select.option value="">{{ __('All types') }}</flux:select.option>
+            <flux:select.option value="credit">{{ __('Credit') }}</flux:select.option>
+            <flux:select.option value="debit">{{ __('Debit') }}</flux:select.option>
+        </flux:select>
+        <flux:input wire:model.live="dateFrom" type="date" size="sm" class="w-40" placeholder="{{ __('From') }}" />
+        <flux:input wire:model.live="dateTo" type="date" size="sm" class="w-40" placeholder="{{ __('To') }}" />
+        @if ($this->hasActiveFilters)
+            <flux:button wire:click="clearFilters" variant="ghost" size="sm" icon="x-mark">
+                {{ __('Clear') }}
+            </flux:button>
+        @endif
+    </div>
+
     @if ($this->transactions->isEmpty())
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 p-12 text-center">
-            <flux:heading>{{ __('No transactions yet') }}</flux:heading>
-            <flux:subheading>{{ __('Record your first transaction for this account.') }}</flux:subheading>
+            @if ($this->hasActiveFilters)
+                <flux:heading>{{ __('No matching transactions') }}</flux:heading>
+                <flux:subheading>{{ __('Try adjusting your filters.') }}</flux:subheading>
+            @else
+                <flux:heading>{{ __('No transactions yet') }}</flux:heading>
+                <flux:subheading>{{ __('Record your first transaction for this account.') }}</flux:subheading>
+            @endif
         </div>
     @else
         <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
