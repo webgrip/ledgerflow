@@ -34,11 +34,14 @@ Quick wins. All items are < 1 day of effort each.
 | 2 | `.editorconfig` | Whitespace/indent for all editors |
 | 3 | `SECURITY.md` | Responsible disclosure template |
 | 4 | AI safety doc (`docs/ai-safety.md`) | Advisory-only principles, prompt scoping, audit trail |
-| 5 | `CHANGELOG.md` | `git-cliff` config + initial log |
-| 6 | CycloneDX SBOM | `cyclonedx-php-composer` + CI step → `bom.xml` |
-| 7 | PHPStan level 6 | Assess new errors, fix or suppress with justification |
-| 8 | Coverage badge | `--coverage` in CI + badge in README |
-| 9 | OWASP threat model sketch (`docs/threat-model.md`) | Identify key attack surfaces |
+| 5 | `CHANGELOG.md` + `git-cliff` | `cliff.toml` config → `CHANGELOG.md` generated from conventional commits |
+| 6 | CycloneDX SBOM | `cyclonedx-php-composer` + CI step → `bom.json` artifact |
+| 7 | `.releaserc` + `semantic-release` | Automated version bump + GitHub Release from CI on merge to main |
+| 8 | `commitlint` + `husky` | Enforce conventional commit messages via git hook |
+| 9 | **Rector** (`rector/rector`) | `rector.php` config → auto-modernise PHP 8.x syntax; run `--dry-run` first |
+| 10 | PHPStan level 6 | Assess new errors, fix or suppress with justification |
+| 11 | Coverage badge | `--coverage --coverage-clover` in CI + Codecov badge in README |
+| 12 | OWASP threat model sketch (`docs/threat-model.md`) | Identify key attack surfaces (IDOR, prompt injection, mass assignment) |
 
 ---
 
@@ -113,3 +116,20 @@ Incremental domain features. Pull in when the platform story is complete.
 - Live FX rates (model design in ADR is sufficient)
 - OAuth social login (Socialite) — not a fintech requirement
 - Mobile / React Native client — out of scope for portfolio focus
+- **PHPCS** — Pint already handles style; PHPCS adds noise without clear benefit for a solo project
+- **PHPMD** — useful for large teams; PHPStan + Rector cover the important patterns here
+- **Laravel Dusk** — Playwright is superior and already in use
+
+---
+
+## Tool Decision Reference
+
+See `planning/ecosystem.md` for the complete tool ecosystem graph covering:
+- Code quality (PHPStan, Psalm, Rector, PHPCS, PHPMD, PHPInsights)
+- Testing (Pest, Playwright, k6, Behat, Infection)
+- Release management (git-cliff, semantic-release, `.releaserc`, commitlint, husky)
+- API design (OpenAPI, Scramble, Scalar, Swagger UI)
+- Supply chain security (composer audit, CycloneDX, npm audit, OSSF Scorecard)
+- Observability (Horizon, Pulse, Telescope, OTel, Grafana, Loki, Tempo)
+- AI/ML (all Laravel AI SDK features, Prism, embeddings, RAG, MCP)
+- Every tool has a ✅/📋/💡/❌ status with notes on when to add it
