@@ -2,7 +2,8 @@
 
 > A portfolio-grade Laravel fintech platform demonstrating modern PHP engineering patterns: multi-tenant workspaces, domain actions, AI-powered ledger analysis, idempotent webhook ingestion, reconciliation, and a read-only MCP server for AI clients.
 
-[![Tests](https://github.com/webgrip/ledgerflow/actions/workflows/tests.yml/badge.svg)](https://github.com/webgrip/ledgerflow/actions/workflows/tests.yml)
+[![Source](https://github.com/webgrip/ledgerflow/actions/workflows/on_source_change.yml/badge.svg)](https://github.com/webgrip/ledgerflow/actions/workflows/on_source_change.yml)
+[![TechDocs](https://github.com/webgrip/ledgerflow/actions/workflows/on_docs_change.yml/badge.svg)](https://github.com/webgrip/ledgerflow/actions/workflows/on_docs_change.yml)
 [![PHP](https://img.shields.io/badge/PHP-8.4-7A86B8.svg)](https://www.php.net/)
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20.svg)](https://laravel.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -22,14 +23,15 @@
 9. [Developer Tools](#developer-tools)
 10. [Running Tests](#running-tests)
 11. [Code Quality](#code-quality)
-12. [Project Structure](#project-structure)
-13. [Architecture Decisions](#architecture-decisions)
-14. [AI Features](#ai-features)
-15. [MCP Integration](#mcp-integration)
-16. [Webhook Integration](#webhook-integration)
-17. [Contributing](#contributing)
-18. [Roadmap](#roadmap)
-19. [License](#license)
+12. [Release and Documentation Automation](#release-and-documentation-automation)
+13. [Project Structure](#project-structure)
+14. [Architecture Decisions](#architecture-decisions)
+15. [AI Features](#ai-features)
+16. [MCP Integration](#mcp-integration)
+17. [Webhook Integration](#webhook-integration)
+18. [Contributing](#contributing)
+19. [Roadmap](#roadmap)
+20. [License](#license)
 
 ---
 
@@ -493,7 +495,29 @@ vendor/bin/sail bin phpstan analyse --no-progress
 composer audit
 ```
 
-All three run automatically in GitHub Actions on every push to `main`, `master`, and `develop`.
+The source-change workflow runs style checks, static analysis, asset build, database migrations, and Pest against PostgreSQL and Redis whenever relevant source files change.
+
+---
+
+## Release and Documentation Automation
+
+LedgerFlow now separates automation by change domain:
+
+| Workflow | Trigger | Responsibility |
+|------|---------|---------|
+| `on_source_change.yml` | Source, dependency, CI, and release-config changes | Pint, PHPStan, asset build, migrations, Pest, semantic release |
+| `on_docs_change.yml` | `docs/techdocs/**` changes on `main` | Generate and deploy TechDocs |
+| `boost-drift.yml` | Boost guidance changes | Detect stale generated agent guidance |
+
+Releases are driven by Conventional Commits through semantic-release:
+
+- `feat:` and `feature:` create minor releases.
+- `fix:`, `bugfix:`, and `hotfix:` create patch releases.
+- `BREAKING CHANGE` notes create major releases.
+- `release/*` branches publish `rc` prereleases.
+- `main` publishes stable tags, GitHub Releases, and `CHANGELOG.md` updates.
+
+Published technical documentation lives in [`docs/techdocs`](docs/techdocs), using MkDocs Material plus `techdocs-core` for a Backstage-compatible structure.
 
 ---
 
@@ -614,6 +638,7 @@ ledgerflow/
 │
 ├── docs/
 │   ├── adr/           Architecture Decision Records (ADR-001–004)
+│   ├── techdocs/      MkDocs/TechDocs source for published technical docs
 │   ├── architecture.md
 │   ├── ai-strategy.md
 │   ├── setup.md
@@ -628,7 +653,8 @@ ledgerflow/
 │
 ├── .github/
 │   └── workflows/
-│       └── tests.yml  CI pipeline
+│       ├── on_source_change.yml  source CI + semantic release
+│       └── on_docs_change.yml    TechDocs generation/deploy
 │
 ├── compose.yaml       Docker Compose (Sail): PHP, Postgres, Redis, Mailpit
 └── phpstan.neon       Static analysis config
@@ -808,8 +834,6 @@ Next up (**Phase 4 — Supply Chain & Standards**):
 - `.editorconfig`
 - `SECURITY.md`
 - CycloneDX SBOM (`bom.json`)
-- `CHANGELOG.md` + `git-cliff`
-- `.releaserc` + semantic-release
 - Rector for automated PHP upgrades
 - PHPStan level 6
 

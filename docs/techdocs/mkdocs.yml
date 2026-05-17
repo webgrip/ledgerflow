@@ -1,0 +1,37 @@
+site_name: "LedgerFlow"
+site_description: "Technical documentation for the LedgerFlow Laravel fintech platform."
+
+theme:
+  name: "material"
+
+nav:
+  - Home: index.md
+  - Setup: setup.md
+  - Operations: operations.md
+  - Domain Model: domain-model.md
+  - AI Strategy: ai-strategy.md
+  - Architecture: architecture.md
+  - ADRs:
+      - PostgreSQL: adr/001-postgresql.md
+      - Livewire + Flux: adr/002-livewire-flux.md
+      - Laravel AI SDK: adr/003-laravel-ai-sdk.md
+      - Idempotent Webhooks: adr/004-idempotent-webhooks.md
+
+plugins:
+  - techdocs-core:
+      use_material_search: true
+  - search:
+      min-search-length: 2
+      prebuild_index: true
+      indexing: full
+  - mermaid2:
+      arguments:
+        securityLevel: "loose"
+  - macros
+
+markdown_extensions:
+  - admonition
+  - markdown_inline_mermaid
+  - markdown_inline_graphviz
+  - pymdownx.details
+  - pymdownx.superfences
