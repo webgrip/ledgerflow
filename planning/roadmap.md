@@ -1,8 +1,20 @@
 # LedgerFlow Roadmap
 
-This roadmap defines the complete 30-day, 60-day, 90-day, and 1-year plan.
+This roadmap defines the complete 30-day, 60-day, 90-day, and 1-year+ plan.
 
-The project should evolve from a focused Laravel interview-prep app into a portfolio-grade fintech/AI platform.
+The project evolves from a focused Laravel interview-prep app into a portfolio-grade fintech/AI platform.
+
+## Progress
+
+| Phase | Milestones | Status |
+|-------|-----------|--------|
+| 30-day MVP | M0–M4 | ✅ Complete |
+| 60-day Fintech | M5–M6 | ✅ Complete |
+| 90-day Production Shape | M7–M11 | ✅ Complete |
+| Standards & API | M12–M13 | 📋 Next |
+| AI Depth | M14 | 📋 Planned |
+| Fintech Domain | M15 | 📋 Planned |
+| Observability & Deploy | M16 | 📋 Planned |
 
 ## Strategy
 
@@ -393,3 +405,112 @@ Create:
 ## Done criteria
 
 The 1-year phase is done when the project can be used as a serious proof of capability for Laravel, backend engineering, AI integration, and production-platform thinking.
+
+---
+
+# Phase 4: Standards & API (M12–M13)
+
+## Goal
+
+Close the professional polish gaps and expose a real public API. Makes LedgerFlow look like a production SaaS.
+
+## M12: Supply Chain & Developer Standards
+
+Quick wins. Each item is independent and takes < 1 day.
+
+- `composer audit` in CI (dependency vulnerability scanning)
+- CycloneDX SBOM generation (`bom.xml`) — supply-chain security signal for fintech context
+- `.editorconfig` — cross-editor formatting consistency
+- `SECURITY.md` — responsible disclosure policy
+- `CHANGELOG.md` + `git-cliff` — automated changelog from conventional commits
+- `docs/ai-safety.md` — advisory-only principles, prompt minimization, no direct mutations
+- `docs/threat-model.md` — OWASP-style threat model
+- PHPStan level bump (5 → 6 or 7)
+- test coverage report (`--coverage`, Clover XML, CI badge)
+
+## M13: Public REST API
+
+Turns LedgerFlow into a real SaaS product. Required for the API-first direction.
+
+- Laravel Sanctum API token auth
+- versioned JSON:API routes under `/api/v1/`
+- resources: OrganizationResource, AccountResource, TransactionResource, ReconciliationRunResource
+- API policies (same RBAC, token-scoped)
+- OpenAPI spec (`docs/openapi.yaml`)
+- API Feature + Contract tests
+- API rate limiting
+- ADR-005: API design decision (JSON:API vs REST vs GraphQL)
+
+## Done criteria
+
+M12 + M13 are done when: `composer audit` passes in CI, a CycloneDX SBOM is committed, and authenticated API clients can query accounts and transactions via `/api/v1/`.
+
+---
+
+# Phase 5: AI Depth (M14)
+
+## Goal
+
+Demonstrate the full depth of the Laravel AI SDK — not just text generation but embeddings, RAG, conversation memory, and tool use.
+
+## M14: AI Depth — Embeddings, RAG, Conversational
+
+- **Semantic transaction search** — `Embeddings::for(descriptions)->generate()`, cosine similarity query; replaces/supplements text filter
+- **Conversational reconciliation assistant** — `RemembersConversations` trait, persistent chat per reconciliation run
+- **Document Q&A / RAG** — upload PDF bank statement → `Document::fromPath()->put()` → `Stores::create()`, ask questions via `FileSearch` provider tool
+- **Agent with internal tool calling** — AI agent that calls `get-account-summary` MCP tool to answer user questions autonomously
+- **Streaming AI responses** — character-by-character output in the browser using `->stream()`
+- **AI broadcasting** — queued AI job pushes result to browser when done (Laravel Broadcasting)
+- **AI governance dashboard** — costs per agent, per org, per day (from `audit_events` where `event = 'ai.agent_called'`)
+- **ADR-006**: Embeddings and semantic search strategy
+
+## Done criteria
+
+M14 is done when: at least one embeddings-based feature works end-to-end in tests using AI fakes, and a conversational agent with persistence is demonstrated.
+
+---
+
+# Phase 6: Fintech Domain Depth (M15)
+
+## Goal
+
+Deepen the financial domain model. Shows understanding of real fintech problems beyond basic CRUD.
+
+## M15: Fintech Domain
+
+- **Transaction reversals** — `reversal_of_id` FK, create negating entry, audit trail
+- **Multi-currency accounts** — `currency` per account, minor-unit amounts + currency code on transactions
+- **FX conversion ADR** — design document (no live rates needed; model design is the signal)
+- **Account period closing** — mark period as closed, prevent backdated transactions
+- **Cashflow projection agent** — AI forecasts 30/60/90-day cashflow from history (`#[UseSmartestModel]`)
+- **Merchant normalization** — AI normalizes raw descriptions using structured output
+- **Approval workflows** — high-value transactions require owner approval before posting
+- **Reconciliation reports / export** — PDF or CSV summary of a reconciliation run
+
+## Done criteria
+
+M15 is done when: transaction reversals work end-to-end with tests, multi-currency accounts exist in the data model, and the cashflow projection agent returns structured forecasts.
+
+---
+
+# Phase 7: Observability & Deployment (M16)
+
+## Goal
+
+Make the app look like something a real engineering team could operate and evolve in production.
+
+## M16: Observability & Deployment
+
+- **OpenTelemetry** — `open-telemetry/opentelemetry-auto-laravel`, emit traces to OTLP endpoint; design doc
+- **`docs/observability.md`** — recommended Grafana + Loki + Tempo + Prometheus stack for LedgerFlow
+- **Laravel Cloud deployment** — `laravel.yml`, `docs/deployment.md`
+- **Kubernetes / Helm design** — `docs/kubernetes.md` (architecture notes; no running cluster required)
+- **`docs/runbooks/`** — deploy, rollback, queue drain, DB backup, secret rotation
+- **ADR-007**: OpenTelemetry and observability stack choice
+- **SOPS / Vault secrets ADR** — secrets management strategy at scale
+- **Preview environments** — GitHub Actions workflow design for PR-based previews
+
+## Done criteria
+
+M16 is done when: OpenTelemetry is wired up (even if only to a local OTLP endpoint), a deployment guide exists, and the runbooks cover the 5 most common operational scenarios.
+
