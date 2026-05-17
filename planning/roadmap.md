@@ -1,516 +1,226 @@
 # LedgerFlow Roadmap
 
-This roadmap defines the complete 30-day, 60-day, 90-day, and 1-year+ plan.
+This roadmap defines the build order from zero to portfolio-grade fintech/AI platform.
+Each phase produces a demonstrable, working application.
 
-The project evolves from a focused Laravel interview-prep app into a portfolio-grade fintech/AI platform.
-
-## Progress
-
-| Phase | Milestones | Status |
-|-------|-----------|--------|
-| 30-day MVP | M0–M4 | ✅ Complete |
-| 60-day Fintech | M5–M6 | ✅ Complete |
-| 90-day Production Shape | M7–M11 | ✅ Complete |
-| Standards & API | M12–M13 | 📋 Next |
-| AI Depth | M14 | 📋 Planned |
-| Fintech Domain | M15 | 📋 Planned |
-| Observability & Deploy | M16 | 📋 Planned |
-
-## Strategy
-
-Do not try to build everything at once.
-
-Each phase should produce a working application that can be demonstrated.
-
-Use this roadmap to decide what to build next and what to defer.
+Status key: ✅ Done · ⬜ Not started
 
 ---
 
-# 30-Day Plan: Foundation and Interview-Ready MVP
+## Phase 1 — Foundation & Interview-Ready MVP (30-day)
+**Milestones: M0–M4 + M9 (polish)**
+✅ Complete
 
-## Goal
-
-Create a working Laravel fintech foundation that demonstrates modern Laravel competence.
-
-## Main outcome
-
-A user can sign in, create or join an organization, create financial accounts, record basic transactions, view balances/activity, and request a simple AI explanation.
-
-## Product scope
-
-Build:
-
-- authentication
-- user profile basics
-- organization/workspace model
-- organization membership
-- account creation
-- basic transaction recording
-- transaction list
-- account balance display
-- audit event basics
-- first AI explanation feature
-- README and architecture notes
-
-## Engineering scope
-
-Set up:
-
-- Laravel starter kit
-- PostgreSQL
-- Redis
-- Sail/Docker local workflow
-- Pest
-- Pint
-- PHPStan/Larastan
-- Laravel Boost
-- basic CI
-
-## AI scope
-
-Install and configure:
-
-- Laravel Boost for development assistance
-- project guidelines and role files
-- Laravel AI SDK for first user-facing AI feature
-
-First AI feature:
-
-- explain a transaction or account activity in plain language
-
-## Testing scope
-
-Test:
-
-- auth-protected pages
-- organization access
-- account creation
-- basic transaction creation
-- balance calculation
-- AI explanation authorization
-- important validation failures
-
-## Documentation scope
-
-Write:
-
-- README
-- local setup guide
-- architecture overview
-- roadmap
-- first ADRs
-
-## Demo story
-
-The demo should show:
-
-1. user logs in
-2. user opens an organization
-3. user creates accounts
-4. user records transactions
-5. user sees account activity
-6. user asks AI to explain a transaction
-7. tests and CI prove the basics
-
-## Done criteria
-
-The 30-day phase is done when the app can be cloned, run, tested, and demonstrated in under 10 minutes.
+What was built:
+- Fortify auth (login, register, email verify, settings)
+- Multi-org workspace with Owner/Member roles
+- Account management (Asset/Liability/Revenue/Expense, currency)
+- Transaction recording with balance calculation
+- Transaction filters (search, type, date range — URL-bound, reactive)
+- AI explanation via TransactionExplainer agent
+- AuditLogger fires on every mutation and AI call
+- Pest tests, PHPStan level 5, Pint, CI (GitHub Actions)
+- Playwright E2E suite (102 tests)
+- Dev dashboard, README, 4 ADRs, demo seed (Alice/Bob/Carol)
 
 ---
 
-# 60-Day Plan: Serious Fintech MVP
+## Phase 2 — Serious Fintech Workflows (60-day)
+**Milestones: M5–M8**
+✅ Complete
 
-## Goal
-
-Move from basic app to credible fintech workflow system.
-
-## Main outcome
-
-The app can ingest external events, process them idempotently, run reconciliation, and show useful operational state.
-
-## Product scope
-
-Add:
-
-- payment-provider abstraction
-- webhook event storage
-- idempotent webhook processing
-- transaction import
-- reconciliation runs
-- reconciliation issue list
-- account statements
-- transaction filters/search
-- richer audit log
-- role-based organization permissions
-
-## Engineering scope
-
-Add:
-
-- queued jobs
-- Horizon
-- scheduled reconciliation
-- failed-job handling
-- better database indexes
-- domain events
-- notifications where useful
-- policy coverage
-
-## AI scope
-
-Add AI features:
-
-- transaction classification
-- reconciliation explanation
-- account activity summary
-
-AI should remain advisory.
-
-## Testing scope
-
-Test:
-
-- webhook signature handling or placeholder strategy
-- duplicate webhook idempotency
-- queued processing
-- reconciliation happy path
-- reconciliation mismatch path
-- organization role permissions
-- AI classification with fakes
-
-## Documentation scope
-
-Add:
-
-- webhook flow doc
-- reconciliation flow doc
-- audit model doc
-- AI feature doc
-- operational notes for queues
-
-## Demo story
-
-The demo should show:
-
-1. external webhook arrives
-2. duplicate webhook is ignored
-3. transaction appears in account activity
-4. reconciliation run detects or resolves issues
-5. AI explains a mismatch
-6. Horizon shows queue processing
-
-## Done criteria
-
-The 60-day phase is done when the app demonstrates real async workflows and safe external-event handling.
+What was built:
+- Idempotent webhook ingestion with Stripe HMAC validation
+- `ProcessWebhookEvent` queued job with two-layer idempotency guard
+- Webhook replay tool (owner-only, failed events)
+- Reconciliation runs + issues + AI mismatch explanation
+- TransactionCategorizer (structured AI output)
+- AccountActivitySummarizer
+- Laravel Horizon, Pulse, Telescope, `/health`, structured logging
+- Read-only MCP server (4 org-scoped tools, 13 tests)
+- Rate limiting (api/webhooks/ai), tenant isolation tests
+- CSV export + import (modal, validate, dedup)
+- Audit log viewer page, Webhooks page
 
 ---
 
-# 90-Day Plan: Production-Shaped Platform
+## Phase 3 — Production-Shaped Platform (90-day)
+**Milestones: M10–M11**
+✅ Complete
 
-## Goal
-
-Make the app look like something a serious Laravel team could evolve.
-
-## Main outcome
-
-The app has stronger security, observability, AI governance, and external read-only AI access.
-
-## Product scope
-
-Add:
-
-- audit log viewer
-- export workflow
-- signed export links
-- admin/operations dashboard
-- reconciliation status dashboard
-- AI analysis history
-- settings for AI usage
-- read-only MCP tools
-
-## Engineering scope
-
-Add:
-
-- structured logging
-- Pulse dashboard
-- OpenTelemetry design or initial instrumentation
-- rate limits
-- health checks
-- stronger CI
-- seed/demo data
-- safer migration strategy
-- operational runbooks
-
-## AI scope
-
-Add:
-
-- document/statement Q&A
-- AI analysis history
-- read-only MCP server
-- tool-level authorization
-- audit logging for AI/MCP calls
-
-## Security scope
-
-Review:
-
-- tenant isolation
-- export access
-- AI prompt data
-- webhook validation
-- audit coverage
-- rate limits
-- sensitive logging
-- dependency risk
-
-## Testing scope
-
-Test:
-
-- MCP read-only tools
-- export authorization
-- audit visibility
-- AI prompt scoping
-- rate-limited endpoints
-- cross-tenant access attempts
-- failed queued jobs where practical
-
-## Documentation scope
-
-Add:
-
-- security notes
-- observability guide
-- MCP guide
-- AI safety guide
-- deployment guide
-- demo script
-
-## Demo story
-
-The demo should show:
-
-1. operator dashboard
-2. reconciliation issue
-3. AI explanation
-4. read-only MCP query
-5. audit trail
-6. queue and app metrics
-7. security controls
-
-## Done criteria
-
-The 90-day phase is done when the app has credible production shape, even if not fully production complete.
+What was built:
+- Security hardening: HMAC, rate limits, tenant isolation test suite
+- `AuditLogger::logAiCall()` for token + model cost tracking
+- `SECURITY.md`-ready patterns, webhook signature config
+- Manual .http files, Gherkin .feature files, k6 performance tests
+- Complete test pyramid: Unit, Integration, Functional, Contract, Smoke, E2E, Behavioral, Performance
+- CI overhauled: PostgreSQL 17, Redis 7, Pint + PHPStan + Pest steps
 
 ---
 
-# 1-Year Plan: Portfolio-Grade Fintech/AI Platform
+## Phase 4 — Supply Chain & Developer Standards
+**Milestones: M12**
+⬜ Not started
 
-## Goal
+Goals:
+- Look production-safe to a security reviewer
+- Demonstrate supply-chain security awareness
+- Complete documentation promises from earlier phases
 
-Turn LedgerFlow into a deep technical portfolio platform.
+Key items:
+- `composer audit` in CI
+- CycloneDX SBOM (`bom.xml`) generated and committed
+- `.editorconfig`, `SECURITY.md`, `CHANGELOG.md`
+- AI safety document (`docs/ai-safety.md`)
+- OWASP threat model sketch (`docs/threat-model.md`)
+- PHPStan level bump (5 → 6)
+- Test coverage report + CI badge
 
-## Main outcome
-
-The app demonstrates Laravel, fintech modeling, AI, observability, security, deployment, and long-term architectural thinking.
-
-## Product capabilities
-
-Potential features:
-
-- multi-currency accounts
-- FX conversion model
-- account periods
-- transaction reversals
-- holds/reservations
-- approval workflows
-- chargebacks/disputes
-- risk scoring
-- statement imports
-- provider sandbox
-- developer API
-- reporting dashboard
-- cashflow projection
-- AI support assistant
-- AI fraud triage
-- document Q&A
-- read-only external MCP tools
-
-## Engineering capabilities
-
-Potential additions:
-
-- public API
-- JSON:API resources
-- OAuth/API token strategy
-- outbox pattern
-- event-driven projections
-- background import pipeline
-- advanced search
-- caching strategy
-- load testing
-- backup/restore testing
-- Kubernetes/Helm deployment
-- reusable GitHub Actions workflows
-
-## AI capabilities
-
-Potential additions:
-
-- merchant normalization
-- transaction categorization
-- reconciliation analyst
-- support response drafting
-- statement Q&A
-- policy Q&A
-- anomaly explanation
-- fraud triage assistant
-- natural-language search
-- AI cost tracking
-- AI governance dashboard
-
-## Platform capabilities
-
-Potential additions:
-
-- Kubernetes deployment
-- Helm chart
-- SOPS/Akeyless/Vault-style secrets
-- Grafana/Loki/Tempo/Prometheus
-- OpenTelemetry traces
-- CI/CD pipeline
-- preview environments
-- release notes
-- rollback process
-- operational runbooks
-
-## Documentation capabilities
-
-Create:
-
-- polished README
-- architecture diagrams
-- ADR collection
-- threat model
-- AI safety document
-- deployment guide
-- demo videos or screenshots
-- API docs
-- MCP docs
-- roadmap history
-- interview talking points
-
-## Done criteria
-
-The 1-year phase is done when the project can be used as a serious proof of capability for Laravel, backend engineering, AI integration, and production-platform thinking.
+Why now: These are quick wins that dramatically improve the professional signal of the repository
+before adding more features.
 
 ---
 
-# Phase 4: Standards & API (M12–M13)
+## Phase 5 — Public REST API
+**Milestones: M13**
+⬜ Not started
 
-## Goal
+Goals:
+- Make LedgerFlow accessible to programmatic clients
+- Demonstrate API design discipline (versioning, resources, OpenAPI)
+- Add Sanctum token auth as a complement to session auth
 
-Close the professional polish gaps and expose a real public API. Makes LedgerFlow look like a production SaaS.
+Key items:
+- Laravel Sanctum personal access tokens
+- `/api/v1/` with AccountResource, TransactionResource, ReconciliationRunResource
+- JSON:API-style pagination + filtering
+- OpenAPI 3.1 spec (`docs/openapi.yaml`)
+- Scalar or Swagger UI embedded
+- API Contract tests + rate limiting
+- ADR-005: API auth strategy
 
-## M12: Supply Chain & Developer Standards
-
-Quick wins. Each item is independent and takes < 1 day.
-
-- `composer audit` in CI (dependency vulnerability scanning)
-- CycloneDX SBOM generation (`bom.xml`) — supply-chain security signal for fintech context
-- `.editorconfig` — cross-editor formatting consistency
-- `SECURITY.md` — responsible disclosure policy
-- `CHANGELOG.md` + `git-cliff` — automated changelog from conventional commits
-- `docs/ai-safety.md` — advisory-only principles, prompt minimization, no direct mutations
-- `docs/threat-model.md` — OWASP-style threat model
-- PHPStan level bump (5 → 6 or 7)
-- test coverage report (`--coverage`, Clover XML, CI badge)
-
-## M13: Public REST API
-
-Turns LedgerFlow into a real SaaS product. Required for the API-first direction.
-
-- Laravel Sanctum API token auth
-- versioned JSON:API routes under `/api/v1/`
-- resources: OrganizationResource, AccountResource, TransactionResource, ReconciliationRunResource
-- API policies (same RBAC, token-scoped)
-- OpenAPI spec (`docs/openapi.yaml`)
-- API Feature + Contract tests
-- API rate limiting
-- ADR-005: API design decision (JSON:API vs REST vs GraphQL)
-
-## Done criteria
-
-M12 + M13 are done when: `composer audit` passes in CI, a CycloneDX SBOM is committed, and authenticated API clients can query accounts and transactions via `/api/v1/`.
+Why now: The public API transforms LedgerFlow from "a nice demo" to "something you could build a
+client on top of". It's also a prerequisite for future MCP write tools and external integrations.
 
 ---
 
-# Phase 5: AI Depth (M14)
+## Phase 6 — Advanced AI (Embeddings, RAG, Conversational)
+**Milestones: M14–M15**
+⬜ Not started
 
-## Goal
+Goals:
+- Demonstrate the full breadth of the Laravel AI SDK
+- Show practical AI-in-fintech patterns beyond simple explain/categorize
 
-Demonstrate the full depth of the Laravel AI SDK — not just text generation but embeddings, RAG, conversation memory, and tool use.
+Key items:
+- Semantic transaction search (Embeddings + cosine similarity)
+- Conversational reconciliation assistant (RemembersConversations)
+- Document Q&A / RAG (upload bank statement → FileSearch → answer questions)
+- Auto-import from uploaded documents (structured output → RecordTransaction)
+- Cashflow projection agent (HasStructuredOutput, series data)
+- AI governance dashboard (per-agent costs from audit_events)
+- Streaming explanations (->stream() in browser)
+- Provider failover (OpenAI → Anthropic)
+- Agent with MCP tool calling (AI calls get-account-summary internally)
+- ADR-006: Embedding strategy, ADR-007: RAG pipeline
 
-## M14: AI Depth — Embeddings, RAG, Conversational
-
-- **Semantic transaction search** — `Embeddings::for(descriptions)->generate()`, cosine similarity query; replaces/supplements text filter
-- **Conversational reconciliation assistant** — `RemembersConversations` trait, persistent chat per reconciliation run
-- **Document Q&A / RAG** — upload PDF bank statement → `Document::fromPath()->put()` → `Stores::create()`, ask questions via `FileSearch` provider tool
-- **Agent with internal tool calling** — AI agent that calls `get-account-summary` MCP tool to answer user questions autonomously
-- **Streaming AI responses** — character-by-character output in the browser using `->stream()`
-- **AI broadcasting** — queued AI job pushes result to browser when done (Laravel Broadcasting)
-- **AI governance dashboard** — costs per agent, per org, per day (from `audit_events` where `event = 'ai.agent_called'`)
-- **ADR-006**: Embeddings and semantic search strategy
-
-## Done criteria
-
-M14 is done when: at least one embeddings-based feature works end-to-end in tests using AI fakes, and a conversational agent with persistence is demonstrated.
-
----
-
-# Phase 6: Fintech Domain Depth (M15)
-
-## Goal
-
-Deepen the financial domain model. Shows understanding of real fintech problems beyond basic CRUD.
-
-## M15: Fintech Domain
-
-- **Transaction reversals** — `reversal_of_id` FK, create negating entry, audit trail
-- **Multi-currency accounts** — `currency` per account, minor-unit amounts + currency code on transactions
-- **FX conversion ADR** — design document (no live rates needed; model design is the signal)
-- **Account period closing** — mark period as closed, prevent backdated transactions
-- **Cashflow projection agent** — AI forecasts 30/60/90-day cashflow from history (`#[UseSmartestModel]`)
-- **Merchant normalization** — AI normalizes raw descriptions using structured output
-- **Approval workflows** — high-value transactions require owner approval before posting
-- **Reconciliation reports / export** — PDF or CSV summary of a reconciliation run
-
-## Done criteria
-
-M15 is done when: transaction reversals work end-to-end with tests, multi-currency accounts exist in the data model, and the cashflow projection agent returns structured forecasts.
+Why now: This is where LedgerFlow becomes distinctly "AI-native" rather than "AI-assisted". Each
+feature maps to a specific Laravel AI SDK capability that isn't commonly demonstrated.
 
 ---
 
-# Phase 7: Observability & Deployment (M16)
+## Phase 7 — Observability & Deployment
+**Milestones: M16**
+⬜ Not started
 
-## Goal
+Goals:
+- Complete the production-platform story
+- Demonstrate understanding of modern observability tooling
+- Make the app deployable with a single command
 
-Make the app look like something a real engineering team could operate and evolve in production.
+Key items:
+- OpenTelemetry traces (open-telemetry/opentelemetry-auto-laravel)
+- Grafana / Loki / Tempo local stack (compose.observability.yaml)
+- Laravel Cloud deployment (laravel.yml + deployment guide)
+- Kubernetes / Helm design notes
+- Operational runbooks (deploy, rollback, queue drain, DB backup)
+- ADR-008: Observability stack selection
 
-## M16: Observability & Deployment
+---
 
-- **OpenTelemetry** — `open-telemetry/opentelemetry-auto-laravel`, emit traces to OTLP endpoint; design doc
-- **`docs/observability.md`** — recommended Grafana + Loki + Tempo + Prometheus stack for LedgerFlow
-- **Laravel Cloud deployment** — `laravel.yml`, `docs/deployment.md`
-- **Kubernetes / Helm design** — `docs/kubernetes.md` (architecture notes; no running cluster required)
-- **`docs/runbooks/`** — deploy, rollback, queue drain, DB backup, secret rotation
-- **ADR-007**: OpenTelemetry and observability stack choice
-- **SOPS / Vault secrets ADR** — secrets management strategy at scale
-- **Preview environments** — GitHub Actions workflow design for PR-based previews
+## Phase 8 — Fintech Domain Depth
+**Milestones: M17**
+⬜ Not started
 
-## Done criteria
+Goals:
+- Demonstrate accounting domain knowledge beyond basic CRUD
+- Add features that require real domain modeling decisions
 
-M16 is done when: OpenTelemetry is wired up (even if only to a local OTLP endpoint), a deployment guide exists, and the runbooks cover the 5 most common operational scenarios.
+Key items:
+- Transaction reversals (correction entries, reversal_of_id)
+- Multi-currency accounts + FX rate model
+- Account periods (period closing, anti-backdating)
+- Approval workflows (two-person rule for high-value entries)
+- Holds / reservations (reserve before clear)
+- Merchant normalization (AI maps raw → canonical)
+- ADR-009: Single-entry vs double-entry bookkeeping
 
+Why last: These are incremental domain features. The platform story (API, AI depth, observability)
+provides more differentiation than transaction reversals for a portfolio context.
+
+---
+
+## Prioritized Backlog Summary
+
+### 🔴 High — Start here
+
+1. `composer audit` in CI (30 min)
+2. `.editorconfig` (10 min)
+3. `SECURITY.md` (30 min)
+4. AI safety document `docs/ai-safety.md` (1 hr)
+5. `CHANGELOG.md` with git-cliff (30 min)
+6. CycloneDX SBOM in CI (1 hr)
+7. PHPStan level 6 (assess + fix)
+8. Test coverage badge in CI
+
+### 🟡 Medium — Phase 5
+
+9.  Laravel Sanctum + `/api/v1/` routes
+10. AccountResource, TransactionResource, ReconciliationRunResource
+11. OpenAPI spec (`docs/openapi.yaml`)
+12. API Contract + Feature tests
+
+### 🟢 High-value AI — Phase 6
+
+13. Semantic transaction search (Embeddings)
+14. Conversational reconciliation assistant (RemembersConversations)
+15. AI governance dashboard (from audit_events)
+16. Cashflow projection agent
+17. Streaming AI responses
+18. Document Q&A / RAG
+
+### 🔵 Platform — Phase 7
+
+19. OpenTelemetry traces
+20. Laravel Cloud deployment config
+21. Observability notes doc (Grafana/Loki/Tempo)
+22. Runbooks
+
+### ⚪ Domain depth — Phase 8
+
+23. Transaction reversals
+24. Account periods
+25. Multi-currency
+26. Approval workflows
+
+---
+
+## Done Criteria per Phase
+
+| Phase | Done when… |
+|-------|-----------|
+| 4 (Standards) | `composer audit` clean, SBOM committed, AI safety doc written, PHPStan ≥ 6 |
+| 5 (API) | `/api/v1/` returns resources, OpenAPI spec validates, Contract tests pass |
+| 6 (AI depth) | Embeddings search works, conversational assistant has memory, RAG returns answers from uploaded PDF |
+| 7 (Ops) | OTel traces visible in local Tempo, deployment guide tested end-to-end |
+| 8 (Domain) | Transaction reversals create correct counter-entries, period close blocks backdating |
