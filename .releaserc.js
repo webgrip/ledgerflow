@@ -1,3 +1,7 @@
+// Forge gate: GITEA_ACTIONS is intrinsic to the Forgejo runner (=true there, unset on GitHub;
+// GITHUB_ACTIONS is set on BOTH so it can't discriminate). Publish + commit-back are gated on it.
+const onForgejo = !!process.env.GITEA_ACTIONS;
+
 const noteKeywords = ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'];
 
 const branches = [
@@ -58,7 +62,7 @@ const gitConfig = [
     '@semantic-release/git',
     {
         assets: ['CHANGELOG.md'],
-        message: 'chore(release): ${nextRelease.version}\n\n${nextRelease.notes}',
+        message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
     },
 ];
 
@@ -72,12 +76,16 @@ const execConfig = [
 const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || '';
 const isMainBranch = branchName === 'main';
 
+// Forgejo: @saithodev/semantic-release-gitea (reads GITEA_URL/GITEA_TOKEN set by the shared
+// composite action). GitHub: the original @semantic-release/github, kept for the mirror.
+const publishConfig = onForgejo ? ['@saithodev/semantic-release-gitea', {}] : '@semantic-release/github';
+
 const plugins = [
     commitAnalyzerConfig,
     releaseNotesGeneratorConfig,
-    ...(isMainBranch ? [changelogConfig, gitConfig] : []),
+    ...(isMainBranch && onForgejo ? [changelogConfig, gitConfig] : []),
     execConfig,
-    '@semantic-release/github',
+    publishConfig,
 ];
 
 export default {

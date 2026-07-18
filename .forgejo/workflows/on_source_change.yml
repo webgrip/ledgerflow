@@ -1,5 +1,19 @@
 name: '[Workflow] On Source Change'
 
+# Forgejo mirror of .github/workflows/on_source_change.yml (forgejo-port-workflows). Adaptations:
+#   - PHP jobs run in `container: composer:2.8.5` (PHP 8.4, satisfies the app's ^8.3) with a plain
+#     `git clone` checkout — JS actions (actions/checkout, actions/cache, shivammathur/setup-php)
+#     cannot run inside a container that ships no Node, and the per-job composer install replaces
+#     the actions/cache vendor handoff
+#   - services are addressed by SERVICE NAME (postgres/redis), not 127.0.0.1: on this runner every
+#     job is a container job, so services join the job network instead of publishing host ports
+#   - the test job adds nodejs/npm via apk (alpine) for the Vite build
+#   - release runs the shared composite action with WEBGRIP_CI_TOKEN (Forgejo reserves the
+#     FORGEJO_ prefix, so a stored secret of that name cannot exist); publish plugin is gated in
+#     .releaserc.js (Gitea plugin on Forgejo, @semantic-release/github on the GitHub mirror)
+#   - pull_request triggers dropped: Forgejo fires push events for the branches themselves
+#   - boost-drift.yml and the *.agent.md files stay GitHub-side (gh-aw / PR-annotation specific)
+
 concurrency:
   group: source-${{ github.ref_name }}
   cancel-in-progress: true
@@ -29,60 +43,21 @@ on:
       - 'playwright.config.ts'
       - 'vite.config.js'
       - '.releaserc.js'
-      - '.github/workflows/on_source_change.yml'
-  pull_request:
-    branches:
-      - develop
-      - main
-      - master
-    paths:
-      - 'app/**'
-      - 'bootstrap/**'
-      - 'config/**'
-      - 'database/**'
-      - 'public/**'
-      - 'resources/**'
-      - 'routes/**'
-      - 'stubs/**'
-      - 'tests/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'phpstan.neon'
-      - 'phpunit.xml'
-      - 'phpunit.eval.xml'
-      - 'pint.json'
-      - 'playwright.config.ts'
-      - 'vite.config.js'
-      - '.releaserc.js'
-      - '.github/workflows/on_source_change.yml'
-
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-
-env:
-  PHP_VERSION: '8.4'
-  NODE_VERSION: '22'
+      - '.forgejo/workflows/on_source_change.yml'
 
 jobs:
   lint:
     name: 'Lint'
-    runs-on: ubuntu-latest
-    environment: Testing
-
+    runs-on: docker
+    container:
+      image: composer:2.8.5
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          tools: composer:v2
-          coverage: none
+      - name: 'Checkout (plain git — JS actions cannot run in this container)'
+        run: |
+          set -eu
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git clone --depth 50 --branch "${GITHUB_REF_NAME}" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
+          git checkout -q "${GITHUB_SHA}" 2>/dev/null || echo "note: ${GITHUB_SHA} outside clone depth; using branch tip"
 
       - name: Add Flux credentials
         if: ${{ secrets.FLUX_USERNAME != '' && secrets.FLUX_LICENSE_KEY != '' }}
@@ -96,23 +71,20 @@ jobs:
 
   static-analysis:
     name: 'Static Analysis'
-    runs-on: ubuntu-latest
-    environment: Testing
+    runs-on: docker
+    container:
+      image: composer:2.8.5
     needs: [lint]
     if: >
       always()
       && needs.lint.result == 'success'
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          tools: composer:v2
-          coverage: none
+      - name: 'Checkout (plain git — JS actions cannot run in this container)'
+        run: |
+          set -eu
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git clone --depth 50 --branch "${GITHUB_REF_NAME}" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
+          git checkout -q "${GITHUB_SHA}" 2>/dev/null || echo "note: ${GITHUB_SHA} outside clone depth; using branch tip"
 
       - name: Add Flux credentials
         if: ${{ secrets.FLUX_USERNAME != '' && secrets.FLUX_LICENSE_KEY != '' }}
@@ -128,12 +100,13 @@ jobs:
         run: php artisan key:generate
 
       - name: Run PHPStan
-        run: ./vendor/bin/phpstan analyse --no-progress --error-format=github
+        run: ./vendor/bin/phpstan analyse --no-progress
 
   test:
     name: 'Test'
-    runs-on: ubuntu-latest
-    environment: Testing
+    runs-on: docker
+    container:
+      image: composer:2.8.5
     needs: [static-analysis]
     if: >
       always()
@@ -146,40 +119,19 @@ jobs:
           POSTGRES_DB: laravel_testing
           POSTGRES_USER: sail
           POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
       redis:
         image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: 'Checkout (plain git — JS actions cannot run in this container)'
+        run: |
+          set -eu
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git clone --depth 50 --branch "${GITHUB_REF_NAME}" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
+          git checkout -q "${GITHUB_SHA}" 2>/dev/null || echo "note: ${GITHUB_SHA} outside clone depth; using branch tip"
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          tools: composer:v2
-          coverage: none
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+      - name: Install Node (alpine)
+        run: apk add --no-cache nodejs npm
 
       - name: Install Node dependencies
         run: npm ci
@@ -199,12 +151,12 @@ jobs:
           php artisan key:generate
           echo "APP_ENV=testing" >> .env
           echo "DB_CONNECTION=pgsql" >> .env
-          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_HOST=postgres" >> .env
           echo "DB_PORT=5432" >> .env
           echo "DB_DATABASE=laravel_testing" >> .env
           echo "DB_USERNAME=sail" >> .env
           echo "DB_PASSWORD=password" >> .env
-          echo "REDIS_HOST=127.0.0.1" >> .env
+          echo "REDIS_HOST=redis" >> .env
           echo "REDIS_PORT=6379" >> .env
           echo "CACHE_STORE=redis" >> .env
           echo "QUEUE_CONNECTION=redis" >> .env
@@ -212,15 +164,23 @@ jobs:
       - name: Build assets
         run: npm run build
 
+      - name: Wait for Postgres
+        run: |
+          i=0
+          until php -r 'exit(@fsockopen("postgres", 5432) ? 0 : 1);'; do
+            i=$((i+1)); [ $i -ge 30 ] && { echo "postgres never became reachable"; exit 1; }
+            sleep 2
+          done
+
       - name: Run database migrations
         run: php artisan migrate --force
 
       - name: Run Pest
         run: ./vendor/bin/pest --compact
 
-  release-publish:
+  release:
     name: 'Release'
-    runs-on: ubuntu-latest
+    runs-on: docker
     needs: [static-analysis, test]
     if: >
       always()
@@ -228,24 +188,13 @@ jobs:
       && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))
       && needs.static-analysis.result == 'success'
       && needs.test.result == 'success'
-
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      statuses: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: Semantic Release
+        uses: https://forgejo.webgrip.dev/webgrip/workflows/.forgejo/composite-actions/semantic-release@main
         with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Publish release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          token: ${{ secrets.WEBGRIP_CI_TOKEN }}

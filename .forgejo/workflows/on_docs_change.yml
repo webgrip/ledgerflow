@@ -1,5 +1,8 @@
 name: '[Workflow] On Documentation Change'
 
+# Forgejo mirror of .github/workflows/on_docs_change.yml. The techdocs-deploy reusable needs the CI
+# bot token (stored as WEBGRIP_CI_TOKEN — Forgejo reserves the FORGEJO_ prefix for built-ins).
+
 concurrency:
   group: docs-${{ github.ref_name }}
   cancel-in-progress: true
@@ -10,7 +13,7 @@ on:
       - main
     paths:
       - 'docs/techdocs/**'
-      - '.github/workflows/on_docs_change.yml'
+      - '.forgejo/workflows/on_docs_change.yml'
   workflow_dispatch:
     inputs:
       source-dir:
@@ -19,18 +22,17 @@ on:
         required: false
         default: 'docs/techdocs'
 
-permissions:
-  contents: write
-
 jobs:
   generate-documentation:
     name: 'Generate'
-    uses: webgrip/workflows/.github/workflows/techdocs-generate.yml@main
+    uses: webgrip/workflows/.forgejo/workflows/techdocs-generate.yml@main
     with:
       source-dir: ${{ github.event.inputs.source-dir || 'docs/techdocs' }}
 
   deploy-documentation:
     name: 'Deploy'
-    uses: webgrip/workflows/.github/workflows/techdocs-deploy-gh-pages.yml@main
+    uses: webgrip/workflows/.forgejo/workflows/techdocs-deploy-gh-pages.yml@main
     needs: generate-documentation
     if: ${{ github.ref == 'refs/heads/main' }}
+    secrets:
+      FORGEJO_TOKEN: ${{ secrets.WEBGRIP_CI_TOKEN }}
