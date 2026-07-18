@@ -192,3 +192,5 @@ jobs:
         uses: https://forgejo.webgrip.dev/webgrip/workflows/.forgejo/composite-actions/semantic-release@main
         with:
           token: ${{ secrets.WEBGRIP_CI_TOKEN }}
+
+# validate: full pipeline now that Actions fire on this repo
