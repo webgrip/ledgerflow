@@ -1,0 +1,9 @@
+name: canary-plain
+on:
+  push:
+    branches: [chore/forgejo-ci-port]
+jobs:
+  ping:
+    runs-on: docker
+    steps:
+      - run: echo plain-canary-ok

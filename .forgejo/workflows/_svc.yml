@@ -1,0 +1,14 @@
+name: canary-services
+on:
+  push:
+    branches: [chore/forgejo-ci-port]
+jobs:
+  svc-ping:
+    runs-on: docker
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: password
+    steps:
+      - run: echo services-canary-ok
