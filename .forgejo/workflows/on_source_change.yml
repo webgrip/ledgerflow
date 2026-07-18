@@ -12,6 +12,9 @@ name: '[Workflow] On Source Change'
 #     FORGEJO_ prefix, so a stored secret of that name cannot exist); publish plugin is gated in
 #     .releaserc.js (Gitea plugin on Forgejo, @semantic-release/github on the GitHub mirror)
 #   - pull_request triggers dropped: Forgejo fires push events for the branches themselves
+#   - Flux-credential steps dropped: the app requires the FREE livewire/flux (packagist, no auth);
+#     re-add via env-var shell guards if flux-pro ever lands — `secrets.*` inside a step `if:`
+#     makes this act_runner drop the whole workflow SILENTLY (zero tasks, nothing logged)
 #   - boost-drift.yml and the *.agent.md files stay GitHub-side (gh-aw / PR-annotation specific)
 
 concurrency:
@@ -59,9 +62,6 @@ jobs:
           git clone --depth 50 --branch "${GITHUB_REF_NAME}" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
           git checkout -q "${GITHUB_SHA}" 2>/dev/null || echo "note: ${GITHUB_SHA} outside clone depth; using branch tip"
 
-      - name: Add Flux credentials
-        if: ${{ secrets.FLUX_USERNAME != '' && secrets.FLUX_LICENSE_KEY != '' }}
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
@@ -86,9 +86,6 @@ jobs:
           git clone --depth 50 --branch "${GITHUB_REF_NAME}" "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" .
           git checkout -q "${GITHUB_SHA}" 2>/dev/null || echo "note: ${GITHUB_SHA} outside clone depth; using branch tip"
 
-      - name: Add Flux credentials
-        if: ${{ secrets.FLUX_USERNAME != '' && secrets.FLUX_LICENSE_KEY != '' }}
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
@@ -136,9 +133,6 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Add Flux credentials
-        if: ${{ secrets.FLUX_USERNAME != '' && secrets.FLUX_LICENSE_KEY != '' }}
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
