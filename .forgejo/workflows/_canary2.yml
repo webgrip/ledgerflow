@@ -1,0 +1,9 @@
+name: canary-fresh-branch
+on:
+  push:
+    branches: [ci-canary]
+jobs:
+  ping2:
+    runs-on: docker
+    steps:
+      - run: echo fresh-branch-canary-ok
