@@ -33,7 +33,9 @@ jobs:
     needs: generate-documentation
     if: github.ref == 'refs/heads/main'
     with:
-      dest-prefix: ledgerflow
+      # Own bucket (estate #2): this repo's key can touch nothing but
+      # docs-ledgerflow(-trash), so a bad sync can never clobber the estate.
+      bucket: docs-ledgerflow
       # strict:false until this repo's links are cleaned; flip like homelab did.
       strict: 'true'
     secrets:
